@@ -605,9 +605,6 @@ class ZLibraryDownloader:
             return False
         
         book_id = book.get('id', book.get('url', ''))
-        if book_id in self.download_history:
-            console.print(f"[yellow]跳过已下载: {book.get('title', 'Unknown')}[/yellow]")
-            return True
         
         # 优先使用搜索结果中的下载链接（来自 z-bookcard）
         download_url = book.get('download_url')
@@ -628,13 +625,6 @@ class ZLibraryDownloader:
         safe_title = re.sub(r'[<>:"/\\|?*]', '_', title)[:100]
         filename = f"{safe_title}.{file_format}"
         filepath = os.path.join(config.DOWNLOAD_DIR, filename)
-        
-        # 如果文件已存在，跳过
-        if os.path.exists(filepath):
-            console.print(f"[yellow]文件已存在: {filename}[/yellow]")
-            self.download_history.append(book_id)
-            self._save_download_history()
-            return True
         
         # 带重试的下载
         max_retries = config.MAX_RETRIES
