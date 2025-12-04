@@ -701,6 +701,9 @@ class ZLibraryDownloader:
                     real_filename = re.sub(r'[<>:"/\\|?*]', '_', real_filename)
                     filepath = os.path.join(config.DOWNLOAD_DIR, real_filename)
                 
+                # 确保下载目录存在
+                os.makedirs(os.path.dirname(filepath), exist_ok=True)
+                
                 # 写入临时文件
                 temp_filepath = filepath + '.tmp'
                 downloaded_size = 0
