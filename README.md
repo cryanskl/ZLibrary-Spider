@@ -1,56 +1,56 @@
-# Z-Library 批量下载工具
+# Z-Library Batch Downloader
 
-一个功能强大的 Z-Library 电子书批量下载工具，支持并发下载、多页搜索、断点续传等功能。
+A powerful batch download tool for Z-Library e-books, supporting concurrent downloads, multi-page search, resume capability, and more.
 
 ## Language / 语言
 
-[English](README_EN.md) | [中文](README.md)
+[English](README.md) | [中文](README_CN.md)
 
-## 功能特点
+## Features
 
-- ✅ **账号登录**：自动登录，保存登录状态
-- ✅ **关键词搜索**：支持单页搜索和多页批量搜索
-- ✅ **批量下载**：支持单本、多选、范围选择、全部下载
-- ✅ **并发下载**：多线程同时下载，大幅提升下载速度
-- ✅ **进度显示**：实时显示下载进度和速度
-- ✅ **自动重试**：网络错误自动重试，支持手动重试失败项
-- ✅ **断点续传**：自动跳过已下载文件
-- ✅ **每日限额跟踪**：自动记录下载数量
-- ✅ **文件名优化**：自动去除 `(Z-Library)` 后缀
-- ✅ **代理支持**：支持 HTTP/HTTPS 代理
+- ✅ **Account Login**: Automatic login with saved session state
+- ✅ **Keyword Search**: Support single-page and multi-page batch search
+- ✅ **Batch Download**: Support single, multiple, range selection, and download all
+- ✅ **Concurrent Downloads**: Multi-threaded simultaneous downloads for significantly improved speed
+- ✅ **Progress Display**: Real-time download progress and speed
+- ✅ **Auto Retry**: Automatic retry on network errors, manual retry for failed items
+- ✅ **Resume Capability**: Automatically skip already downloaded files
+- ✅ **Daily Limit Tracking**: Automatically record download count
+- ✅ **Filename Optimization**: Automatically remove `(Z-Library)` suffix
+- ✅ **Proxy Support**: Support HTTP/HTTPS proxy
 
-## 安装
+## Installation
 
 ```bash
-# 进入项目目录
+# Navigate to project directory
 cd ZLibrary-Spider
 
-# 创建虚拟环境（推荐）
+# Create virtual environment (recommended)
 python3 -m venv venv
 source venv/bin/activate  # macOS/Linux
 # venv\Scripts\activate   # Windows
 
-# 安装依赖
+# Install dependencies
 pip install -r requirements.txt
 ```
 
-## 配置
+## Configuration
 
-编辑 `config.py` 文件：
+Edit the `config.py` file:
 
 ```python
-# ============ 账号配置 ============
+# ============ Account Configuration ============
 EMAIL = "your_email@example.com"
 PASSWORD = "your_password"
 
-# ============ 下载配置 ============
-DAILY_DOWNLOAD_LIMIT = 300    # 每日下载上限
-DOWNLOAD_DIR = "./downloads"  # 下载保存目录
-REQUEST_DELAY = 0.5           # 请求间隔（秒）
-MAX_RETRIES = 3               # 失败重试次数
-CONCURRENT_DOWNLOADS = 3      # 并发下载数量（建议 3-5）
+# ============ Download Configuration ============
+DAILY_DOWNLOAD_LIMIT = 300    # Daily download limit
+DOWNLOAD_DIR = "./downloads"  # Download save directory
+REQUEST_DELAY = 0.5           # Request interval (seconds)
+MAX_RETRIES = 3               # Retry count on failure
+CONCURRENT_DOWNLOADS = 3      # Concurrent download count (recommended 3-5)
 
-# ============ 网络配置 ============
+# ============ Network Configuration ============
 BASE_URL = "https://z-library.la"
 TIMEOUT = 30
 USE_PROXY = False
@@ -60,218 +60,220 @@ PROXY = {
 }
 ```
 
-### 配置说明
+### Configuration Guide
 
-| 配置项 | 说明 | 建议值 |
-|--------|------|--------|
-| `DAILY_DOWNLOAD_LIMIT` | 每日下载上限 | 根据账号等级设置 |
-| `REQUEST_DELAY` | 请求间隔（秒） | 0.3-1.0 |
-| `CONCURRENT_DOWNLOADS` | 并发下载数量 | 3-5 |
-| `MAX_RETRIES` | 失败重试次数 | 3-5 |
+| Configuration | Description | Recommended Value |
+|---------------|-------------|-------------------|
+| `DAILY_DOWNLOAD_LIMIT` | Daily download limit | Set according to account level |
+| `REQUEST_DELAY` | Request interval (seconds) | 0.3-1.0 |
+| `CONCURRENT_DOWNLOADS` | Concurrent download count | 3-5 |
+| `MAX_RETRIES` | Retry count on failure | 3-5 |
 
-## 使用方法
+## Usage
 
-### 启动程序
+### Start the Program
 
 ```bash
 python zlib_downloader.py
 ```
 
-### 可用命令
+### Available Commands
 
-| 命令 | 说明 | 示例 |
-|------|------|------|
-| `search <关键词>` | 搜索书籍（仅第1页） | `search Python` |
-| `searchall <关键词> [页数]` | 搜索多页 | `searchall Python 6` |
-| `searchall <关键词> [起始页-结束页]` | 搜索指定页码范围 | `searchall Python 2-6` |
-| `download <序号/范围/all>` | 下载书籍 | `download all` / `download 1-10` / `download 1,3,5` |
-| `retry` | 重试失败的下载 | `retry` |
-| `login` | 手动登录 | `login` |
-| `cookies <文件路径>` | 导入浏览器 cookies | `cookies cookies.json` |
-| `status` | 查看当前状态 | `status` |
-| `file <文件路径>` | 从文件批量搜索下载 | `file books.txt` |
-| `help` | 查看帮助 | `help` |
-| `exit` | 退出程序 | `exit` |
+| Command | Description | Example |
+|---------|-------------|---------|
+| `search <keyword>` | Search books (page 1 only) | `search Python` |
+| `searchall <keyword> [pages]` | Search multiple pages | `searchall Python 6` |
+| `searchall <keyword> [start-end]` | Search specified page range | `searchall Python 2-6` |
+| `download <index/range/all>` | Download books | `download all` / `download 1-10` / `download 1,3,5` |
+| `retry` | Retry failed downloads | `retry` |
+| `login` | Manual login | `login` |
+| `cookies <file_path>` | Import browser cookies | `cookies cookies.json` |
+| `status` | View current status | `status` |
+| `file <file_path>` | Batch search and download from file | `file books.txt` |
+| `help` | Show help | `help` |
+| `exit` | Exit program | `exit` |
 
-### 使用示例
+### Usage Examples
 
-#### 示例 1：搜索并下载所有结果
+#### Example 1: Search and Download All Results
 
 ```
-Z-Lib> search 机器学习
-正在搜索: 机器学习 (第 1 页)...
-找到 50 本书
+Z-Lib> search machine learning
+Searching: machine learning (Page 1)...
+Found 50 books
 
 Z-Lib> download all
-开始批量下载 50 本书...
-并发数量: 3
+Starting batch download of 50 books...
+Concurrent downloads: 3
 
-总进度 (15/50) ━━━━━━━━━━━━━━━━ 30%
-#1 机器学习实战... ━━━━━━━━━━━━━━ 45% 12.5 MB/s
-#2 深度学习... ━━━━━━━━━━━━━━━━━━ 23% 8.2 MB/s
-#3 统计学习方法... ━━━━━━━━━━━━━ 67% 15.1 MB/s
+Total Progress (15/50) ━━━━━━━━━━━━━━━━ 30%
+#1 Machine Learning in Action... ━━━━━━━━━━━━━━ 45% 12.5 MB/s
+#2 Deep Learning... ━━━━━━━━━━━━━━━━━━ 23% 8.2 MB/s
+#3 Statistical Learning Methods... ━━━━━━━━━━━━━ 67% 15.1 MB/s
 
-下载完成！
-  成功: 48
-  失败: 2
-  跳过: 0
+Download complete!
+  Success: 48
+  Failed: 2
+  Skipped: 0
 
-有 2 本书下载失败，输入 'retry' 可以重试
+2 books failed to download, enter 'retry' to retry
 ```
 
-#### 示例 2：搜索多页并批量下载
+#### Example 2: Search Multiple Pages and Batch Download
 
 ```
-# 搜索第1-6页（共300本书）
-Z-Lib> searchall 半导体 6
-开始搜索: 半导体 (第 1 - 6 页)...
-正在获取第 1 页...
-第 1 页: 找到 50 本书
-正在获取第 2 页...
+# Search pages 1-6 (300 books total)
+Z-Lib> searchall semiconductor 6
+Starting search: semiconductor (Pages 1 - 6)...
+Fetching page 1...
+Page 1: Found 50 books
+Fetching page 2...
 ...
-搜索完成！共找到 300 本书
+Search complete! Found 300 books total
 
-提示: 输入 'download all' 下载所有 300 本书
+Tip: Enter 'download all' to download all 300 books
 
 Z-Lib> download all
 ```
 
-#### 示例 3：下载指定页码范围（跳过已下载的第1页）
+#### Example 3: Download Specified Page Range (Skip Already Downloaded Page 1)
 
 ```
-# 只搜索第2-6页
-Z-Lib> searchall 半导体 2-6
-开始搜索: 半导体 (第 2 - 6 页)...
+# Search only pages 2-6
+Z-Lib> searchall semiconductor 2-6
+Starting search: semiconductor (Pages 2 - 6)...
 ...
-搜索完成！共找到 250 本书
+Search complete! Found 250 books
 
 Z-Lib> download all
 ```
 
-#### 示例 4：重试失败的下载
+#### Example 4: Retry Failed Downloads
 
 ```
 Z-Lib> retry
-准备重试 5 本失败的书籍...
-开始批量下载 5 本书 (重试)...
+Preparing to retry 5 failed books...
+Starting batch download of 5 books (retry)...
 ```
 
-### 命令行模式
+### Command Line Mode
 
 ```bash
-# 搜索书籍
-python zlib_downloader.py -s "Python编程"
+# Search books
+python zlib_downloader.py -s "Python Programming"
 
-# 搜索并下载所有结果
-python zlib_downloader.py -s "Python编程" -d all
+# Search and download all results
+python zlib_downloader.py -s "Python Programming" -d all
 
-# 从文件批量下载
+# Batch download from file
 python zlib_downloader.py -f books.txt
 ```
 
-### 从文件批量下载
+### Batch Download from File
 
-创建 `books.txt`，每行一个书名：
+Create `books.txt`, one book title per line:
 
 ```
-Python编程从入门到实践
-深入理解计算机系统
-算法导论
+Python Programming: From Beginner to Practice
+Computer Systems: A Programmer's Perspective
+Introduction to Algorithms
 ```
 
-然后运行：
+Then run:
 
 ```bash
 python zlib_downloader.py -f books.txt
 ```
 
-## 性能优化
+## Performance Optimization
 
-### 提升下载速度
+### Improve Download Speed
 
-修改 `config.py`：
+Modify `config.py`:
 
 ```python
-# 减少请求间隔
+# Reduce request interval
 REQUEST_DELAY = 0.3
 
-# 增加并发数
+# Increase concurrency
 CONCURRENT_DOWNLOADS = 5
 ```
 
-### 网络不稳定时
+### When Network is Unstable
 
 ```python
-# 增加重试次数
+# Increase retry count
 MAX_RETRIES = 5
 
-# 增加请求间隔
+# Increase request interval
 REQUEST_DELAY = 1.0
 
-# 减少并发数
+# Reduce concurrency
 CONCURRENT_DOWNLOADS = 2
 ```
 
-## 常见问题
+## FAQ
 
-### Q: 登录失败怎么办？
+### Q: What to do if login fails?
 
-1. 检查邮箱密码是否正确
-2. 在浏览器中确认账号可以正常登录
-3. **手动导入 cookies**（推荐）：
-   - 安装浏览器扩展 [EditThisCookie](https://chrome.google.com/webstore/detail/editthiscookie/fngmhnnpilhplaeedifhccceomclgfbg)
-   - 登录 Z-Library 后导出 cookies 为 JSON
-   - 保存为 `cookies.json`
-   - 运行：`cookies cookies.json`
-   - 详见 `export_cookies.md`
+1. Check if email and password are correct
+2. Confirm account can log in normally in browser
+3. **Manually import cookies** (recommended):
+   - Install browser extension [EditThisCookie](https://chrome.google.com/webstore/detail/editthiscookie/fngmhnnpilhplaeedifhccceomclgfbg)
+   - Export cookies as JSON after logging into Z-Library
+   - Save as `cookies.json`
+   - Run: `cookies cookies.json`
+   - See `export_cookies.md` for details
 
-### Q: 下载速度慢？
+### Q: Slow download speed?
 
-1. 增加并发数：`CONCURRENT_DOWNLOADS = 5`
-2. 减少请求间隔：`REQUEST_DELAY = 0.3`
-3. 检查网络连接是否稳定
+1. Increase concurrency: `CONCURRENT_DOWNLOADS = 5`
+2. Reduce request interval: `REQUEST_DELAY = 0.3`
+3. Check if network connection is stable
 
-### Q: 搜索不到书籍？
+### Q: Can't find books?
 
-1. 尝试使用英文书名
-2. 检查网络连接
-3. 确认 Z-Library 网站可访问
+1. Try using English book titles
+2. Check network connection
+3. Confirm Z-Library website is accessible
 
-### Q: 下载失败后如何处理？
+### Q: How to handle download failures?
 
-1. 程序会自动重试（默认3次）
-2. 失败的书籍会被记录，可输入 `retry` 重试
-3. 增加 `MAX_RETRIES` 值
+1. Program will automatically retry (default 3 times)
+2. Failed books will be recorded, enter `retry` to retry
+3. Increase `MAX_RETRIES` value
 
-### Q: 文件名乱码？
+### Q: Filename encoding issues?
 
-已修复。程序会自动：
-- 正确解码 UTF-8 文件名
-- 去除 `(Z-Library)` 后缀
-- 清理非法字符
+Fixed. The program will automatically:
+- Correctly decode UTF-8 filenames
+- Remove `(Z-Library)` suffix
+- Clean illegal characters
 
-## 文件说明
+## File Structure
 
 ```
-dowload-ZLibrary/
-├── config.py           # 配置文件
-├── zlib_downloader.py  # 主程序
-├── requirements.txt    # Python 依赖
-├── README.md           # 使用文档
-├── TROUBLESHOOTING.md  # 问题排查记录
-├── export_cookies.md   # Cookies 导出指南
-├── downloads/          # 下载目录
-├── cookies.json        # 登录状态（自动生成）
-└── download_history.json # 下载记录（自动生成）
+ZLibrary-Spider/
+├── config.py           # Configuration file
+├── zlib_downloader.py  # Main program
+├── requirements.txt    # Python dependencies
+├── README.md           # Documentation (English)
+├── README_CN.md        # Documentation (Chinese)
+├── TROUBLESHOOTING.md  # Troubleshooting guide
+├── export_cookies.md   # Cookie export guide
+├── downloads/          # Download directory
+├── cookies.json        # Login state (auto-generated)
+└── download_history.json # Download history (auto-generated)
 ```
 
-## 注意事项
+## Notes
 
-1. **合理使用**：遵守网站使用条款，不要过度请求
-2. **每日限额**：程序会自动跟踪下载数量
-3. **网络问题**：如无法访问，尝试配置代理
-4. **账号安全**：不要分享你的 cookies 文件
+1. **Use Responsibly**: Comply with website terms of service, do not make excessive requests
+2. **Daily Limits**: Program automatically tracks download count
+3. **Network Issues**: If unable to access, try configuring proxy
+4. **Account Security**: Do not share your cookies file
 
-## 免责声明
+## Disclaimer
 
-此工具仅供学习交流使用，请遵守当地法律法规和网站使用条款。用户使用本工具所产生的一切后果由用户自行承担。
+This tool is for educational and research purposes only. Please comply with local laws and regulations and website terms of service. Users are solely responsible for any consequences arising from the use of this tool.
+
