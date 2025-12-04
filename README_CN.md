@@ -36,13 +36,27 @@ pip install -r requirements.txt
 
 ## 配置
 
-编辑 `config.py` 文件：
+### 1. 账号配置（必需）
+
+复制 `.env.example` 为 `.env` 并编辑：
+
+```bash
+cp .env.example .env
+```
+
+编辑 `.env` 文件：
+
+```bash
+# Z-Library 账号
+ZLIB_EMAIL=your_email@example.com
+ZLIB_PASSWORD=your_password
+```
+
+### 2. 下载设置（可选）
+
+编辑 `config.py` 文件自定义下载设置：
 
 ```python
-# ============ 账号配置 ============
-EMAIL = "your_email@example.com"
-PASSWORD = "your_password"
-
 # ============ 下载配置 ============
 DAILY_DOWNLOAD_LIMIT = 300    # 每日下载上限
 DOWNLOAD_DIR = "./downloads"  # 下载保存目录
@@ -253,8 +267,10 @@ CONCURRENT_DOWNLOADS = 2
 ## 文件说明
 
 ```
-dowload-ZLibrary/
-├── config.py           # 配置文件
+ZLibrary-Spider/
+├── .env.example        # 环境变量模板（复制为 .env）
+├── .env                # 你的账号密码（从 .env.example 创建）
+├── config.py           # 下载和网络设置
 ├── zlib_downloader.py  # 主程序
 ├── requirements.txt    # Python 依赖
 ├── README.md           # 使用文档（英文）

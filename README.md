@@ -36,13 +36,27 @@ pip install -r requirements.txt
 
 ## Configuration
 
-Edit the `config.py` file:
+### 1. Account Configuration (Required)
+
+Copy `.env.example` to `.env` and edit it:
+
+```bash
+cp .env.example .env
+```
+
+Edit the `.env` file:
+
+```bash
+# Z-Library Account
+ZLIB_EMAIL=your_email@example.com
+ZLIB_PASSWORD=your_password
+```
+
+### 2. Download Settings (Optional)
+
+Edit `config.py` to customize download settings:
 
 ```python
-# ============ Account Configuration ============
-EMAIL = "your_email@example.com"
-PASSWORD = "your_password"
-
 # ============ Download Configuration ============
 DAILY_DOWNLOAD_LIMIT = 300    # Daily download limit
 DOWNLOAD_DIR = "./downloads"  # Download save directory
@@ -254,7 +268,9 @@ Fixed. The program will automatically:
 
 ```
 ZLibrary-Spider/
-├── config.py           # Configuration file
+├── .env.example        # Environment variables template (copy to .env)
+├── .env                # Your account credentials (create from .env.example)
+├── config.py           # Download and network settings
 ├── zlib_downloader.py  # Main program
 ├── requirements.txt    # Python dependencies
 ├── README.md           # Documentation (English)
