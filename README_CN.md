@@ -94,27 +94,28 @@ PROXY = {
 python zlib_downloader.py
 ```
 
-### 可用命令
+### 可用命令（交互模式）
 
 | 命令 | 说明 | 示例 |
 |------|------|------|
-| `search <关键词>` | 搜索书籍（仅第1页） | `search Python` |
-| `searchall <关键词> [页数]` | 搜索多页 | `searchall Python 6` |
-| `searchall <关键词> [起始页-结束页]` | 搜索指定页码范围 | `searchall Python 2-6` |
+| `search <关键词> [起始页-结束页]` | 搜索多页（最大页数默认为 `config.MAX_SEARCH_PAGES`，当前 100） | `search Python` / `search Python 2-6` / `search Python 6` |
 | `download <序号/范围/all>` | 下载书籍 | `download all` / `download 1-10` / `download 1,3,5` |
 | `retry` | 重试失败的下载 | `retry` |
 | `login` | 手动登录 | `login` |
 | `cookies <文件路径>` | 导入浏览器 cookies | `cookies cookies.json` |
 | `status` | 查看当前状态 | `status` |
-| `file <文件路径>` | 从文件批量搜索下载 | `file books.txt` |
+| `file <文件路径>` | 从文件批量搜索下载（文件内一行一个书名） | `file books.txt` |
 | `help` | 查看帮助 | `help` |
-| `exit` | 退出程序 | `exit` |
+| `exit` | 退出程序（或按 Ctrl+C） | `exit` |
 
 ### 命令行模式
 
 ```bash
-# 搜索书籍
+# 搜索书籍（默认最多搜索 config.MAX_SEARCH_PAGES 页）
 python zlib_downloader.py -s "Python编程"
+
+# 指定最大页数
+python zlib_downloader.py -s "Python编程" -p 20
 
 # 搜索并下载所有结果
 python zlib_downloader.py -s "Python编程" -d all
@@ -122,6 +123,10 @@ python zlib_downloader.py -s "Python编程" -d all
 # 从文件批量下载
 python zlib_downloader.py -f books.txt
 ```
+
+### 下载历史与跳过
+- `SKIP_DOWNLOADED`（config，默认 `True`）：已下载过的书会被跳过。
+- 跳过的条目不会计入成功下载数，统计中会单独显示跳过数量。
 
 ## 📖 代码学习要点
 

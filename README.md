@@ -94,27 +94,28 @@ PROXY = {
 python zlib_downloader.py
 ```
 
-### Available Commands
+### Available Commands (interactive)
 
 | Command | Description | Example |
 |---------|-------------|---------|
-| `search <keyword>` | Search books (page 1 only) | `search Python` |
-| `searchall <keyword> [pages]` | Search multiple pages | `searchall Python 6` |
-| `searchall <keyword> [start-end]` | Search specified page range | `searchall Python 2-6` |
+| `search <keyword> [start-end]` | Search multiple pages (default max pages from `config.MAX_SEARCH_PAGES`, currently 100) | `search Python`, `search Python 2-6`, `search Python 6` |
 | `download <index/range/all>` | Download books | `download all` / `download 1-10` / `download 1,3,5` |
 | `retry` | Retry failed downloads | `retry` |
 | `login` | Manual login | `login` |
 | `cookies <file_path>` | Import browser cookies | `cookies cookies.json` |
 | `status` | View current status | `status` |
-| `file <file_path>` | Batch search and download from file | `file books.txt` |
+| `file <file_path>` | Batch search and download from file (one title per line) | `file books.txt` |
 | `help` | Show help | `help` |
-| `exit` | Exit program | `exit` |
+| `exit` | Exit program (or press Ctrl+C) | `exit` |
 
 ### Command Line Mode
 
 ```bash
-# Search books
+# Search books (default up to config.MAX_SEARCH_PAGES pages)
 python zlib_downloader.py -s "Python Programming"
+
+# Search with custom max pages
+python zlib_downloader.py -s "Python Programming" -p 20
 
 # Search and download all results
 python zlib_downloader.py -s "Python Programming" -d all
@@ -122,6 +123,10 @@ python zlib_downloader.py -s "Python Programming" -d all
 # Batch download from file
 python zlib_downloader.py -f books.txt
 ```
+
+### Download history & skipping
+- `SKIP_DOWNLOADED` (config, default `True`): already-downloaded books are skipped.
+- Skipped items are **not** counted as successful downloads; they appear separately in the statistics.
 
 ## 📖 Key Learning Points
 
