@@ -1,23 +1,35 @@
-# Z-Library Batch Downloader
+# Python Web Scraping Learning Project
 
-A powerful batch download tool for Z-Library e-books, supporting concurrent downloads, multi-page search, resume capability, and more.
+> ⚠️ **Disclaimer**: This project is for learning Python web scraping techniques only. Do not use it for illegally downloading copyrighted books. Please respect intellectual property rights and support official publications!
+
+A sample project for learning Python web scraping techniques, covering core technologies such as HTTP requests, HTML parsing, concurrent programming, and session management.
 
 ## Language / 语言
 
 [English](README.md) | [中文](README_CN.md)
 
-## Features
+## 📚 Learning Objectives
 
-- ✅ **Account Login**: Automatic login with saved session state
-- ✅ **Keyword Search**: Support single-page and multi-page batch search
-- ✅ **Batch Download**: Support single, multiple, range selection, and download all
-- ✅ **Concurrent Downloads**: Multi-threaded simultaneous downloads for significantly improved speed
-- ✅ **Progress Display**: Real-time download progress and speed
-- ✅ **Auto Retry**: Automatic retry on network errors, manual retry for failed items
-- ✅ **Resume Capability**: Automatically skip already downloaded files
-- ✅ **Daily Limit Tracking**: Automatically record download count
-- ✅ **Filename Optimization**: Automatically remove `(Z-Library)` suffix
-- ✅ **Proxy Support**: Support HTTP/HTTPS proxy
+Through this project, you can learn the following core web scraping techniques:
+
+- **HTTP Request Handling**: Using `requests` library for GET/POST requests
+- **HTML Parsing**: Using `BeautifulSoup` to parse web content
+- **Session Management**: Cookie persistence, login state maintenance
+- **Concurrent Programming**: Multi-threaded downloads, thread pool management
+- **Error Handling**: Network exception handling, automatic retry mechanism
+- **Progress Display**: Beautiful terminal UI using `rich` library
+- **Proxy Configuration**: HTTP/HTTPS proxy support
+
+## 🛠️ Tech Stack
+
+| Technology | Purpose |
+|------------|---------|
+| `requests` | HTTP request library |
+| `BeautifulSoup` | HTML/XML parsing |
+| `lxml` | High-performance parser |
+| `rich` | Terminal beautification (progress bars, tables) |
+| `ThreadPoolExecutor` | Concurrent downloads |
+| `python-dotenv` | Environment variable management |
 
 ## Installation
 
@@ -54,7 +66,7 @@ ZLIB_PASSWORD=your_password
 
 ### 2. Download Settings (Optional)
 
-Edit `config.py` to customize download settings:
+Edit `config.py` to customize settings:
 
 ```python
 # ============ Download Configuration ============
@@ -73,15 +85,6 @@ PROXY = {
     "https": "http://127.0.0.1:7890"
 }
 ```
-
-### Configuration Guide
-
-| Configuration | Description | Recommended Value |
-|---------------|-------------|-------------------|
-| `DAILY_DOWNLOAD_LIMIT` | Daily download limit | Set according to account level |
-| `REQUEST_DELAY` | Request interval (seconds) | 0.3-1.0 |
-| `CONCURRENT_DOWNLOADS` | Concurrent download count | 3-5 |
-| `MAX_RETRIES` | Retry count on failure | 3-5 |
 
 ## Usage
 
@@ -107,69 +110,6 @@ python zlib_downloader.py
 | `help` | Show help | `help` |
 | `exit` | Exit program | `exit` |
 
-### Usage Examples
-
-#### Example 1: Search and Download All Results
-
-```
-Z-Lib> search machine learning
-Searching: machine learning (Page 1)...
-Found 50 books
-
-Z-Lib> download all
-Starting batch download of 50 books...
-Concurrent downloads: 3
-
-Total Progress (15/50) ━━━━━━━━━━━━━━━━ 30%
-#1 Machine Learning in Action... ━━━━━━━━━━━━━━ 45% 12.5 MB/s
-#2 Deep Learning... ━━━━━━━━━━━━━━━━━━ 23% 8.2 MB/s
-#3 Statistical Learning Methods... ━━━━━━━━━━━━━ 67% 15.1 MB/s
-
-Download complete!
-  Success: 48
-  Failed: 2
-  Skipped: 0
-
-2 books failed to download, enter 'retry' to retry
-```
-
-#### Example 2: Search Multiple Pages and Batch Download
-
-```
-# Search pages 1-6 (300 books total)
-Z-Lib> searchall semiconductor 6
-Starting search: semiconductor (Pages 1 - 6)...
-Fetching page 1...
-Page 1: Found 50 books
-Fetching page 2...
-...
-Search complete! Found 300 books total
-
-Tip: Enter 'download all' to download all 300 books
-
-Z-Lib> download all
-```
-
-#### Example 3: Download Specified Page Range (Skip Already Downloaded Page 1)
-
-```
-# Search only pages 2-6
-Z-Lib> searchall semiconductor 2-6
-Starting search: semiconductor (Pages 2 - 6)...
-...
-Search complete! Found 250 books
-
-Z-Lib> download all
-```
-
-#### Example 4: Retry Failed Downloads
-
-```
-Z-Lib> retry
-Preparing to retry 5 failed books...
-Starting batch download of 5 books (retry)...
-```
-
 ### Command Line Mode
 
 ```bash
@@ -183,47 +123,58 @@ python zlib_downloader.py -s "Python Programming" -d all
 python zlib_downloader.py -f books.txt
 ```
 
-### Batch Download from File
+## 📖 Key Learning Points
 
-Create `books.txt`, one book title per line:
-
-```
-Python Programming: From Beginner to Practice
-Computer Systems: A Programmer's Perspective
-Introduction to Algorithms
-```
-
-Then run:
-
-```bash
-python zlib_downloader.py -f books.txt
-```
-
-## Performance Optimization
-
-### Improve Download Speed
-
-Modify `config.py`:
+### 1. HTTP Session Management
 
 ```python
-# Reduce request interval
-REQUEST_DELAY = 0.3
-
-# Increase concurrency
-CONCURRENT_DOWNLOADS = 5
+self.session = requests.Session()
+self.session.headers.update({
+    "User-Agent": "Mozilla/5.0 ...",
+    "Accept": "text/html,application/xhtml+xml...",
+})
 ```
 
-### When Network is Unstable
+### 2. HTML Parsing
 
 ```python
-# Increase retry count
-MAX_RETRIES = 5
+soup = BeautifulSoup(resp.text, 'lxml')
+book_cards = soup.find_all('z-bookcard')
+```
 
-# Increase request interval
-REQUEST_DELAY = 1.0
+### 3. Concurrent Downloads
 
-# Reduce concurrency
-CONCURRENT_DOWNLOADS = 2
+```python
+with ThreadPoolExecutor(max_workers=concurrent) as executor:
+    futures = {executor.submit(download_worker, book): book for book in books}
+    for future in as_completed(futures):
+        result = future.result()
+```
+
+### 4. Error Retry Mechanism
+
+```python
+for attempt in range(max_retries):
+    try:
+        resp = self.session.get(url, timeout=config.TIMEOUT)
+        # ...
+    except requests.exceptions.ConnectionError:
+        wait_time = config.REQUEST_DELAY * (2 ** attempt)  # Exponential backoff
+        time.sleep(wait_time)
+```
+
+## File Structure
+
+```
+ZLibrary-Spider/
+├── .env.example        # Environment variables template
+├── config.py           # Configuration file
+├── zlib_downloader.py  # Main program (core code)
+├── requirements.txt    # Python dependencies
+├── README.md           # Documentation (English)
+├── README_CN.md        # Documentation (Chinese)
+├── export_cookies.md   # Cookie export guide
+└── downloads/          # Download directory
 ```
 
 ## FAQ
@@ -231,65 +182,26 @@ CONCURRENT_DOWNLOADS = 2
 ### Q: What to do if login fails?
 
 1. Check if email and password are correct
-2. Confirm account can log in normally in browser
-3. **Manually import cookies** (recommended):
+2. **Manually import cookies** (recommended):
    - Install browser extension [EditThisCookie](https://chrome.google.com/webstore/detail/editthiscookie/fngmhnnpilhplaeedifhccceomclgfbg)
-   - Export cookies as JSON after logging into Z-Library
-   - Save as `cookies.json`
+   - Export cookies as JSON after logging in
    - Run: `cookies cookies.json`
-   - See `export_cookies.md` for details
 
-### Q: Slow download speed?
+### Q: Can't find any content?
 
-1. Increase concurrency: `CONCURRENT_DOWNLOADS = 5`
-2. Reduce request interval: `REQUEST_DELAY = 0.3`
-3. Check if network connection is stable
-
-### Q: Can't find books?
-
-1. Try using English book titles
+1. Try using English keywords
 2. Check network connection
-3. Confirm Z-Library website is accessible
+3. Confirm target website is accessible
 
-### Q: How to handle download failures?
+## ⚠️ Disclaimer
 
-1. Program will automatically retry (default 3 times)
-2. Failed books will be recorded, enter `retry` to retry
-3. Increase `MAX_RETRIES` value
+**This project is for learning Python web scraping techniques only!**
 
-### Q: Filename encoding issues?
+1. Do not use this project for illegally downloading copyrighted books
+2. Please respect intellectual property rights and support official publications
+3. Users are solely responsible for any legal consequences arising from the use of this project
+4. This project does not provide any book resources, only demonstrates web scraping implementation
 
-Fixed. The program will automatically:
-- Correctly decode UTF-8 filenames
-- Remove `(Z-Library)` suffix
-- Clean illegal characters
+## 📜 License
 
-## File Structure
-
-```
-ZLibrary-Spider/
-├── .env.example        # Environment variables template (copy to .env)
-├── .env                # Your account credentials (create from .env.example)
-├── config.py           # Download and network settings
-├── zlib_downloader.py  # Main program
-├── requirements.txt    # Python dependencies
-├── README.md           # Documentation (English)
-├── README_CN.md        # Documentation (Chinese)
-├── TROUBLESHOOTING.md  # Troubleshooting guide
-├── export_cookies.md   # Cookie export guide
-├── downloads/          # Download directory
-├── cookies.json        # Login state (auto-generated)
-└── download_history.json # Download history (auto-generated)
-```
-
-## Notes
-
-1. **Use Responsibly**: Comply with website terms of service, do not make excessive requests
-2. **Daily Limits**: Program automatically tracks download count
-3. **Network Issues**: If unable to access, try configuring proxy
-4. **Account Security**: Do not share your cookies file
-
-## Disclaimer
-
-This tool is for educational and research purposes only. Please comply with local laws and regulations and website terms of service. Users are solely responsible for any consequences arising from the use of this tool.
-
+MIT License - For educational purposes only

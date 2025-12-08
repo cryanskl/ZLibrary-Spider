@@ -51,6 +51,7 @@ class ZLibraryDownloader:
         self.is_logged_in = False
         self.download_count_today = 0
         self.download_history = self._load_download_history()
+        self.is_downloading = False  # 标记是否正在下载
         
         # 创建下载目录
         Path(config.DOWNLOAD_DIR).mkdir(parents=True, exist_ok=True)
@@ -393,8 +394,10 @@ class ZLibraryDownloader:
             if config.VERBOSE:
                 import traceback
     
-    def search_all_pages(self, query, max_pages=10, start_page=1, exact_match=False):
+    def search_all_pages(self, query, max_pages=None, start_page=1, exact_match=False):
         """搜索指定页面范围的书籍"""
+        if max_pages is None:
+            max_pages = getattr(config, 'MAX_SEARCH_PAGES', 10)
         all_books = []
         page = start_page
         end_page = start_page + max_pages - 1
@@ -606,6 +609,11 @@ class ZLibraryDownloader:
         
         book_id = book.get('id', book.get('url', ''))
         
+        # 检查是否已下载（如果配置了跳过）
+        if getattr(config, 'SKIP_DOWNLOADED', True) and book_id in self.download_history:
+            console.print(f"[dim]已下载，跳过: {book.get('title', 'Unknown')}[/dim]")
+            return True  # 返回 True 表示"成功"（已存在）
+        
         # 优先使用搜索结果中的下载链接（来自 z-bookcard）
         download_url = book.get('download_url')
         title = book.get('title', 'Unknown')
@@ -779,6 +787,9 @@ class ZLibraryDownloader:
         console.print(f"[dim]今日已下载: {self.download_count_today}/{config.DAILY_DOWNLOAD_LIMIT}[/dim]")
         console.print(f"[dim]并发数量: {concurrent}[/dim]\n")
         
+        # 设置下载状态标志
+        self.is_downloading = True
+        
         # 过滤掉超过每日限额的书籍
         remaining_quota = config.DAILY_DOWNLOAD_LIMIT - self.download_count_today
         if remaining_quota < total:
@@ -848,29 +859,33 @@ class ZLibraryDownloader:
             return result
         
         # 使用进度条包装下载
-        with progress:
-            if concurrent > 1:
-                # 并发下载
-                with ThreadPoolExecutor(max_workers=concurrent) as executor:
-                    futures = {}
+        try:
+            with progress:
+                if concurrent > 1:
+                    # 并发下载
+                    with ThreadPoolExecutor(max_workers=concurrent) as executor:
+                        futures = {}
+                        for i, book in enumerate(books_to_download):
+                            slot_id = i % concurrent
+                            future = executor.submit(download_worker, book, i, slot_id)
+                            futures[future] = book
+                        
+                        for future in as_completed(futures):
+                            try:
+                                future.result()
+                            except Exception as e:
+                                with lock:
+                                    completed[0] += 1
+                                    failed += 1
+                                    failed_books.append(futures[future])
+                                    progress.update(overall_task, completed=completed[0])
+                else:
+                    # 单线程顺序下载
                     for i, book in enumerate(books_to_download):
-                        slot_id = i % concurrent
-                        future = executor.submit(download_worker, book, i, slot_id)
-                        futures[future] = book
-                    
-                    for future in as_completed(futures):
-                        try:
-                            future.result()
-                        except Exception as e:
-                            with lock:
-                                completed[0] += 1
-                                failed += 1
-                                failed_books.append(futures[future])
-                                progress.update(overall_task, completed=completed[0])
-            else:
-                # 单线程顺序下载
-                for i, book in enumerate(books_to_download):
-                    download_worker(book, i, 0)
+                        download_worker(book, i, 0)
+        finally:
+            # 确保无论是否发生异常都清除下载状态
+            self.is_downloading = False
         
         # 打印统计
         console.print(f"\n[bold]下载完成！[/bold]")
@@ -881,6 +896,9 @@ class ZLibraryDownloader:
         
         # 保存失败列表供重试
         self.last_failed_books = failed_books
+        
+        # 清除下载状态标志
+        self.is_downloading = False
         
         # 如果有失败的，提示可以重试
         if failed_books and not is_retry:
@@ -943,7 +961,7 @@ def interactive_mode(downloader):
     """交互模式"""
     console.print(Panel.fit(
         "[bold cyan]Z-Library 批量下载工具[/bold cyan]\n"
-        "[dim]输入 help 查看帮助[/dim]",
+        "[dim]输入 help 查看帮助，按 Ctrl+C 或输入 exit 退出[/dim]",
         border_style="cyan"
     ))
     
@@ -961,19 +979,17 @@ def interactive_mode(downloader):
             elif cmd.lower() == 'help':
                 console.print("""
 [bold]可用命令:[/bold]
-  [cyan]search <关键词>[/cyan]      - 搜索书籍（仅第1页）
-  [cyan]searchall <关键词> [起始页-结束页][/cyan] - 搜索指定页面范围
-                           例: searchall Python      (搜索第1-10页)
-                           例: searchall Python 6    (搜索第1-6页)
-                           例: searchall Python 2-6  (搜索第2-6页)
-  [cyan]download <序号/all>[/cyan]  - 下载书籍（如: download all, download 1-10）
+  [cyan]search <关键词> [起始页-结束页][/cyan] - 搜索书籍
+                           例: search Python        (搜索第1-10页)
+                           例: search Python 6      (搜索第1-6页)
+                           例: search Python 2-6    (搜索第2-6页)
+  [cyan]download <序号/all>[/cyan]  - 下载书籍（如: download all, download 1-10, download 1,2,3）
   [cyan]retry[/cyan]                - 重试失败的下载
   [cyan]login[/cyan]                - 登录账号
   [cyan]cookies <文件路径>[/cyan]   - 从文件导入浏览器 cookies（如果自动登录失败）
-  [cyan]status[/cyan]           - 查看状态
-  [cyan]download <序号>[/cyan]  - 下载指定书籍 (如: download 1,2,3 或 download 1-5 或 download all)
-  [cyan]file <文件路径>[/cyan]  - 从文件批量搜索下载
-  [cyan]exit[/cyan]             - 退出程序
+  [cyan]status[/cyan]               - 查看状态
+  [cyan]file <文件路径>[/cyan]      - 从文件批量搜索下载
+  [cyan]exit[/cyan]                 - 退出程序（或按 Ctrl+C）
                 """)
             
             elif cmd.lower() == 'login':
@@ -998,16 +1014,16 @@ def interactive_mode(downloader):
   下载目录: {config.DOWNLOAD_DIR}
                 """)
             
-            elif cmd.lower().startswith('searchall '):
-                # 搜索指定页面范围: searchall <关键词> [页数] 或 searchall <关键词> [起始页-结束页]
-                parts = cmd[10:].strip().split()
+            elif cmd.lower().startswith('search '):
+                # 搜索指定页面范围: search <关键词> [页数] 或 search <关键词> [起始页-结束页]
+                parts = cmd[7:].strip().split()
                 if not parts:
                     console.print("[yellow]请提供搜索关键词[/yellow]")
                     continue
                 
                 # 默认值
                 start_page = 1
-                max_pages = 10
+                max_pages = getattr(config, 'MAX_SEARCH_PAGES', 10)
                 
                 # 检查最后一个参数
                 if len(parts) >= 2:
@@ -1035,14 +1051,6 @@ def interactive_mode(downloader):
                 
                 if books:
                     console.print(f"\n[dim]提示: 输入 'download all' 下载所有 {len(books)} 本书[/dim]")
-            
-            elif cmd.lower().startswith('search '):
-                query = cmd[7:].strip()
-                if query:
-                    books = downloader.search(query)
-                    downloader.display_books(books)
-                    # 保存最近搜索结果供下载使用
-                    downloader.last_search_results = books
             
             elif cmd.lower().startswith('download '):
                 arg = cmd[9:].strip()
@@ -1099,7 +1107,19 @@ def interactive_mode(downloader):
                 console.print("[yellow]未知命令，输入 help 查看帮助[/yellow]")
         
         except KeyboardInterrupt:
-            console.print("\n[dim]使用 exit 退出程序[/dim]")
+            console.print("\n[yellow]检测到中断信号...[/yellow]")
+            # 检查是否有正在进行的下载任务
+            if downloader.is_downloading:
+                if Confirm.ask("[yellow]有下载任务正在进行，确定要退出吗？[/yellow]", default=False):
+                    console.print("[dim]正在退出...[/dim]")
+                    downloader.is_downloading = False  # 清除标志
+                    break
+                else:
+                    console.print("[dim]继续运行[/dim]")
+                    continue
+            else:
+                console.print("[dim]再见！[/dim]")
+                break
         except Exception as e:
             console.print(f"[red]错误: {e}[/red]")
 
@@ -1109,7 +1129,7 @@ def main():
     parser.add_argument('-s', '--search', help='搜索关键词')
     parser.add_argument('-f', '--file', help='从文件读取书名列表')
     parser.add_argument('-d', '--download', help='下载搜索结果 (all/序号)')
-    parser.add_argument('-p', '--page', type=int, default=1, help='搜索页码')
+    parser.add_argument('-p', '--pages', type=int, default=None, help=f'搜索最大页数（默认{config.MAX_SEARCH_PAGES}页）')
     parser.add_argument('-i', '--interactive', action='store_true', help='交互模式')
     
     args = parser.parse_args()
@@ -1127,7 +1147,7 @@ def main():
     elif args.file:
         downloader.search_and_download_from_file(args.file)
     elif args.search:
-        books = downloader.search(args.search, page=args.page)
+        books = downloader.search_all_pages(args.search, max_pages=args.pages)
         downloader.display_books(books)
         
         if args.download and books:

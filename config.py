@@ -12,7 +12,7 @@ PASSWORD = os.getenv("ZLIB_PASSWORD", "")
 
 # ============ 下载配置 ============
 # 每日最大下载数量
-DAILY_DOWNLOAD_LIMIT = 300
+DAILY_DOWNLOAD_LIMIT = 999
 
 # 下载文件保存目录
 DOWNLOAD_DIR = "./downloads"
@@ -29,6 +29,9 @@ CONCURRENT_DOWNLOADS = 3
 # ============ 搜索配置 ============
 # 每页搜索结果数量
 RESULTS_PER_PAGE = 50
+
+# 搜索时默认最大页数
+MAX_SEARCH_PAGES = 100
 
 # 优先下载的文件格式（按优先级排序）
 PREFERRED_FORMATS = ["epub", "pdf", "mobi", "azw3", "fb2", "djvu"]
@@ -53,6 +56,9 @@ COOKIES_FILE = "./cookies.json"
 
 # 下载记录文件（避免重复下载）
 DOWNLOAD_HISTORY_FILE = "./download_history.json"
+
+# 是否跳过已下载的文件（True=跳过已下载，False=重新下载）
+SKIP_DOWNLOADED = True
 
 # 是否显示详细日志
 VERBOSE = True
