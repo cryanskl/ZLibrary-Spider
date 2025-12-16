@@ -46,44 +46,60 @@ source venv/bin/activate  # macOS/Linux
 pip install -r requirements.txt
 ```
 
-## Configuration
+## Quick Start
 
-### 1. Account Configuration (Required)
+### Method 1: Using Browser Cookies (Recommended) ⭐
 
-Copy `.env.example` to `.env` and edit it:
+This is the simplest and most reliable method!
 
+1. **Install browser extension**:
+   - Chrome/Edge: Install [EditThisCookie](https://chrome.google.com/webstore/detail/editthiscookie/fngmhnnpilhplaeedifhccceomclgfbg)
+   - Firefox: Install [Cookie-Editor](https://addons.mozilla.org/firefox/addon/cookie-editor/)
+
+2. **Login to Z-Library in browser** (https://z-library.la or https://z-library.ec)
+
+3. **Export Cookies**:
+   - Click extension icon
+   - Click "Export"
+   - Save as `browser_cookies.json`
+
+4. **Run program and import cookies**:
+   ```bash
+   ./start.sh
+   # In interactive mode, enter:
+   cookies browser_cookies.json
+   # Start searching and downloading
+   search Python
+   download all
+   ```
+
+### Method 2: Using Account Credentials (Optional)
+
+If automatic login doesn't work, use Method 1 instead.
+
+Edit `.env` file:
 ```bash
-cp .env.example .env
-```
-
-Edit the `.env` file:
-
-```bash
-# Z-Library Account
 ZLIB_EMAIL=your_email@example.com
 ZLIB_PASSWORD=your_password
 ```
 
-### 2. Download Settings (Optional)
+## Configuration
 
 Edit `config.py` to customize settings:
 
 ```python
-# ============ Download Configuration ============
-DAILY_DOWNLOAD_LIMIT = 300    # Daily download limit
+# Download Configuration
+DAILY_DOWNLOAD_LIMIT = 999    # Daily download limit
 DOWNLOAD_DIR = "./downloads"  # Download save directory
 REQUEST_DELAY = 0.5           # Request interval (seconds)
-MAX_RETRIES = 3               # Retry count on failure
-CONCURRENT_DOWNLOADS = 3      # Concurrent download count (recommended 3-5)
+CONCURRENT_DOWNLOADS = 3      # Concurrent downloads
 
-# ============ Network Configuration ============
-BASE_URL = "https://z-library.la"
-TIMEOUT = 30
-USE_PROXY = False
-PROXY = {
-    "http": "http://127.0.0.1:7890",
-    "https": "http://127.0.0.1:7890"
-}
+# Network Configuration
+BASE_URL = "https://z-library.la"  # Primary domain
+MIRROR_URLS = [                    # Backup domains
+    "https://z-library.la",
+    "https://z-library.ec"
+]
 ```
 
 ## Usage
@@ -184,19 +200,35 @@ ZLibrary-Spider/
 
 ## FAQ
 
-### Q: What to do if login fails?
+### Q: Getting 503 error?
 
-1. Check if email and password are correct
-2. **Manually import cookies** (recommended):
-   - Install browser extension [EditThisCookie](https://chrome.google.com/webstore/detail/editthiscookie/fngmhnnpilhplaeedifhccceomclgfbg)
-   - Export cookies as JSON after logging in
-   - Run: `cookies cookies.json`
+The website has enabled protection. Solutions:
+1. **Import cookies** (recommended): Export cookies from browser after logging in
+2. Wait a few hours and retry (protection is usually temporary)
+3. If you have VPN, try using it
 
-### Q: Can't find any content?
+### Q: How to export browser cookies?
 
-1. Try using English keywords
-2. Check network connection
-3. Confirm target website is accessible
+1. Install browser extension:
+   - Chrome/Edge: [EditThisCookie](https://chrome.google.com/webstore/detail/editthiscookie/fngmhnnpilhplaeedifhccceomclgfbg)
+   - Firefox: Cookie-Editor
+2. Login to Z-Library in browser
+3. Click extension icon → Export → Save as JSON
+4. In program, run: `cookies browser_cookies.json`
+
+### Q: Program runs but search returns empty results?
+
+1. Make sure you've imported valid cookies
+2. Check if the website is accessible in your browser
+3. Try exporting and importing cookies again
+
+### Q: Slow download speed?
+
+Adjust in `config.py`:
+```python
+CONCURRENT_DOWNLOADS = 5  # Increase concurrent downloads
+REQUEST_DELAY = 0.3       # Reduce delay
+```
 
 ## ⚠️ Disclaimer
 

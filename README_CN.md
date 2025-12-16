@@ -46,44 +46,60 @@ source venv/bin/activate  # macOS/Linux
 pip install -r requirements.txt
 ```
 
-## 配置
+## 快速开始
 
-### 1. 账号配置（必需）
+### 方式 1：使用浏览器 Cookies（推荐）⭐
 
-复制 `.env.example` 为 `.env` 并编辑：
+这是最简单、最可靠的方法！
 
-```bash
-cp .env.example .env
-```
+1. **安装浏览器扩展**：
+   - Chrome/Edge: 安装 [EditThisCookie](https://chrome.google.com/webstore/detail/editthiscookie/fngmhnnpilhplaeedifhccceomclgfbg)
+   - Firefox: 安装 [Cookie-Editor](https://addons.mozilla.org/firefox/addon/cookie-editor/)
+
+2. **在浏览器中登录 Z-Library**（https://z-library.la 或 https://z-library.ec）
+
+3. **导出 Cookies**：
+   - 点击扩展图标
+   - 点击"导出"或"Export"
+   - 保存为 `browser_cookies.json`
+
+4. **运行程序并导入 Cookies**：
+   ```bash
+   ./start.sh
+   # 在交互模式中输入：
+   cookies browser_cookies.json
+   # 开始搜索和下载
+   search Python
+   download all
+   ```
+
+### 方式 2：使用账号密码（可选）
+
+如果自动登录不工作，建议使用方式 1。
 
 编辑 `.env` 文件：
-
 ```bash
-# Z-Library 账号
 ZLIB_EMAIL=your_email@example.com
 ZLIB_PASSWORD=your_password
 ```
 
-### 2. 下载设置（可选）
+## 配置说明
 
-编辑 `config.py` 文件自定义设置：
+编辑 `config.py` 自定义设置：
 
 ```python
-# ============ 下载配置 ============
-DAILY_DOWNLOAD_LIMIT = 300    # 每日下载上限
+# 下载配置
+DAILY_DOWNLOAD_LIMIT = 999    # 每日下载上限
 DOWNLOAD_DIR = "./downloads"  # 下载保存目录
 REQUEST_DELAY = 0.5           # 请求间隔（秒）
-MAX_RETRIES = 3               # 失败重试次数
-CONCURRENT_DOWNLOADS = 3      # 并发下载数量（建议 3-5）
+CONCURRENT_DOWNLOADS = 3      # 并发下载数量
 
-# ============ 网络配置 ============
-BASE_URL = "https://z-library.la"
-TIMEOUT = 30
-USE_PROXY = False
-PROXY = {
-    "http": "http://127.0.0.1:7890",
-    "https": "http://127.0.0.1:7890"
-}
+# 网络配置
+BASE_URL = "https://z-library.la"  # 主域名
+MIRROR_URLS = [                    # 备用域名
+    "https://z-library.la",
+    "https://z-library.ec"
+]
 ```
 
 ## 使用方法
@@ -184,19 +200,35 @@ ZLibrary-Spider/
 
 ## 常见问题
 
-### Q: 登录失败怎么办？
+### Q: 遇到 503 错误怎么办？
 
-1. 检查邮箱密码是否正确
-2. **手动导入 cookies**（推荐）：
-   - 安装浏览器扩展 [EditThisCookie](https://chrome.google.com/webstore/detail/editthiscookie/fngmhnnpilhplaeedifhccceomclgfbg)
-   - 登录后导出 cookies 为 JSON
-   - 运行：`cookies cookies.json`
+网站启用了防护，解决方法：
+1. **使用 Cookies 导入**（推荐）：在浏览器中登录后导出 cookies
+2. 等待几小时后重试（防护通常是临时的）
+3. 如果有 VPN，启动后重试
 
-### Q: 搜索不到内容？
+### Q: 如何导出浏览器 Cookies？
 
-1. 尝试使用英文关键词
-2. 检查网络连接
-3. 确认目标网站可访问
+1. 安装浏览器扩展：
+   - Chrome/Edge: [EditThisCookie](https://chrome.google.com/webstore/detail/editthiscookie/fngmhnnpilhplaeedifhccceomclgfbg)
+   - Firefox: Cookie-Editor
+2. 在浏览器中登录 Z-Library
+3. 点击扩展图标 → 导出 → 保存为 JSON
+4. 在程序中运行：`cookies browser_cookies.json`
+
+### Q: 程序能运行但搜索结果为空？
+
+1. 确保已导入有效的 cookies
+2. 检查网站是否能在浏览器中正常访问
+3. 尝试重新导出并导入 cookies
+
+### Q: 下载速度慢？
+
+可以调整 `config.py` 中的并发数量：
+```python
+CONCURRENT_DOWNLOADS = 5  # 增加并发数
+REQUEST_DELAY = 0.3       # 减少延迟
+```
 
 ## ⚠️ 免责声明
 

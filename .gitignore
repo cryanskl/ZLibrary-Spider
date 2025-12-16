@@ -11,13 +11,17 @@ __pycache__/
 
 # 调试文件
 debug_*.html
+error_response.html
+selenium_test.html
+z_library_se_test.html
 
 # 运行时生成的文件（包含登录状态和个人数据）
 cookies.json
 download_history.json
+browser_cookies.json
 
-# 下载目录（可选，取消注释则忽略下载的文件）
-# downloads/
+# 下载目录（下载的书籍文件）
+downloads/
 
 # IDE
 .idea/

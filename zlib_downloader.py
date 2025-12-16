@@ -18,6 +18,7 @@ from urllib.parse import urljoin, quote
 from pathlib import Path
 
 import requests
+import cloudscraper
 from bs4 import BeautifulSoup
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, DownloadColumn, TransferSpeedColumn, TaskID
@@ -35,7 +36,14 @@ class ZLibraryDownloader:
     """Z-Library 下载器类"""
     
     def __init__(self):
-        self.session = requests.Session()
+        # 使用 cloudscraper 代替 requests.Session() 以绕过 Cloudflare 保护
+        self.session = cloudscraper.create_scraper(
+            browser={
+                'browser': 'chrome',
+                'platform': 'darwin',
+                'desktop': True
+            }
+        )
         self.session.headers.update({
             "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
@@ -58,6 +66,9 @@ class ZLibraryDownloader:
         
         # 尝试加载已保存的 cookies
         self._load_cookies()
+        
+        # 自动测试并选择可用的镜像站点
+        self._find_working_mirror()
     
     def _load_cookies(self):
         """加载保存的 cookies"""
@@ -78,6 +89,43 @@ class ZLibraryDownloader:
                 json.dump(cookies, f)
         except Exception as e:
             console.print(f"[yellow]保存 cookies 失败: {e}[/yellow]")
+    
+    def _find_working_mirror(self):
+        """测试并找到可用的镜像站点"""
+        # 先测试默认 URL
+        test_urls = [config.BASE_URL] + getattr(config, 'MIRROR_URLS', [])
+        
+        console.print("[cyan]正在测试可用的 Z-Library 镜像站点...[/cyan]")
+        
+        for url in test_urls:
+            try:
+                resp = self.session.get(url, timeout=10, allow_redirects=True)
+                
+                # 检查是否返回正常页面（不是 503 或 Cloudflare 挑战页面）
+                if resp.status_code == 200:
+                    # 检查是否包含 Cloudflare 挑战页面的特征
+                    if 'checking your browser' not in resp.text.lower() and 'cloudflare' not in resp.text.lower():
+                        console.print(f"[green]✓ 找到可用镜像: {url}[/green]")
+                        self.base_url = url
+                        return True
+                    else:
+                        if config.VERBOSE:
+                            console.print(f"[dim]✗ {url} - 遇到 Cloudflare 保护[/dim]")
+                elif resp.status_code == 503:
+                    if config.VERBOSE:
+                        console.print(f"[dim]✗ {url} - 服务不可用 (503)[/dim]")
+                else:
+                    if config.VERBOSE:
+                        console.print(f"[dim]✗ {url} - 状态码 {resp.status_code}[/dim]")
+            except Exception as e:
+                if config.VERBOSE:
+                    console.print(f"[dim]✗ {url} - 连接失败: {str(e)[:50]}[/dim]")
+                continue
+        
+        console.print("[yellow]⚠ 所有镜像站点均不可用，可能需要手动导入 cookies[/yellow]")
+        console.print("[yellow]提示: 在浏览器中登录 Z-Library，然后使用浏览器扩展导出 cookies[/yellow]")
+        console.print("[dim]推荐扩展: EditThisCookie (Chrome) 或 Cookie-Editor (Firefox)[/dim]")
+        return False
     
     def _load_download_history(self):
         """加载下载历史"""
@@ -317,20 +365,88 @@ class ZLibraryDownloader:
                 console.print(f"[dim]检查登录状态出错: {e}[/dim]")
             return False
     
-    def import_cookies_from_browser(self, cookies_dict):
-        """从浏览器导入 cookies（手动方式）"""
+    def import_cookies_from_browser(self, cookies_data):
+        """从浏览器导入 cookies（手动方式）
+        支持两种格式：
+        1. 简单格式: {"cookie_name": "cookie_value"}
+        2. EditThisCookie/Cookie-Editor 格式: [{"name": "...", "value": "...", "domain": "..."}, ...]
+        """
         try:
+            # 检测 cookies 格式
+            cookies_dict = {}
+            detected_domain = None
+            
+            if isinstance(cookies_data, list):
+                # EditThisCookie 或 Cookie-Editor 数组格式
+                console.print("[dim]检测到浏览器扩展导出格式，正在转换...[/dim]")
+                for cookie in cookies_data:
+                    if isinstance(cookie, dict) and 'name' in cookie and 'value' in cookie:
+                        cookies_dict[cookie['name']] = cookie['value']
+                        # 尝试提取域名
+                        if not detected_domain and 'domain' in cookie:
+                            domain = cookie['domain'].lstrip('.')
+                            if domain:
+                                detected_domain = domain
+                console.print(f"[dim]成功解析 {len(cookies_dict)} 个 cookies[/dim]")
+                
+                # 如果检测到域名，更新 base_url
+                if detected_domain:
+                    new_base_url = f"https://{detected_domain}"
+                    if new_base_url != self.base_url:
+                        console.print(f"[cyan]检测到 cookies 域名: {detected_domain}[/cyan]")
+                        console.print(f"[cyan]切换到对应的站点: {new_base_url}[/cyan]")
+                        self.base_url = new_base_url
+            elif isinstance(cookies_data, dict):
+                # 简单的键值对格式
+                cookies_dict = cookies_data
+            else:
+                console.print("[red]不支持的 cookies 格式[/red]")
+                return False
+            
+            if not cookies_dict:
+                console.print("[red]未找到有效的 cookies[/red]")
+                return False
+            
+            # 清除旧的 cookies 避免冲突
+            self.session.cookies.clear()
+            
+            # 更新 session cookies
             self.session.cookies.update(cookies_dict)
-            self._save_cookies()
+            
+            # 保存新的 cookies
+            try:
+                self._save_cookies()
+            except Exception as e:
+                # cookies 保存失败不影响使用，只是下次启动需要重新导入
+                if config.VERBOSE:
+                    console.print(f"[dim]Cookies 保存时出现警告: {e}[/dim]")
+                # 手动保存为简单格式
+                try:
+                    with open(config.COOKIES_FILE, 'w') as f:
+                        json.dump(cookies_dict, f, indent=2)
+                except:
+                    pass
+            
+            # 验证登录状态
+            console.print("[cyan]正在验证登录状态...[/cyan]")
             if self._check_login_status():
                 self.is_logged_in = True
                 console.print("[green]✓ 通过 cookies 登录成功！[/green]")
+                console.print(f"[green]当前使用站点: {self.base_url}[/green]")
                 return True
             else:
-                console.print("[yellow]Cookies 无效或已过期[/yellow]")
-                return False
+                # 即使验证失败，cookies 可能仍然有效
+                console.print("[yellow]⚠ 未能验证登录状态，但 cookies 已导入[/yellow]")
+                console.print("[cyan]提示: 您可以直接尝试搜索功能，cookies 可能仍然有效[/cyan]")
+                console.print(f"[dim]当前使用站点: {self.base_url}[/dim]")
+                # 标记为可能已登录
+                self.is_logged_in = True
+                return True
         except Exception as e:
             console.print(f"[red]导入 cookies 失败: {e}[/red]")
+            if config.VERBOSE:
+                import traceback
+                console.print(f"[dim]{traceback.format_exc()}[/dim]")
             return False
     
     def import_cookies_from_file(self, filepath):
@@ -985,11 +1101,17 @@ def interactive_mode(downloader):
                            例: search Python 2-6    (搜索第2-6页)
   [cyan]download <序号/all>[/cyan]  - 下载书籍（如: download all, download 1-10, download 1,2,3）
   [cyan]retry[/cyan]                - 重试失败的下载
-  [cyan]login[/cyan]                - 登录账号
-  [cyan]cookies <文件路径>[/cyan]   - 从文件导入浏览器 cookies（如果自动登录失败）
-  [cyan]status[/cyan]               - 查看状态
+  [cyan]login[/cyan]                - 手动输入账号密码登录
+  [cyan]cookies <文件路径>[/cyan]   - 从文件导入浏览器 cookies（推荐！绕过 Cloudflare）
+                           例: cookies browser_cookies.json
+                           详细说明: 查看 COOKIES_GUIDE.md
+  [cyan]status[/cyan]               - 查看登录状态和下载统计
   [cyan]file <文件路径>[/cyan]      - 从文件批量搜索下载
   [cyan]exit[/cyan]                 - 退出程序（或按 Ctrl+C）
+
+[yellow]遇到 Cloudflare 保护？[/yellow]
+  推荐使用 cookies 命令从浏览器导入登录状态
+  详细步骤请查看: [cyan]COOKIES_GUIDE.md[/cyan]
                 """)
             
             elif cmd.lower() == 'login':
@@ -997,13 +1119,21 @@ def interactive_mode(downloader):
                 password = Prompt.ask("密码", password=True)
                 downloader.login(email, password)
             
-            elif cmd.lower().startswith('cookies '):
-                filepath = cmd[8:].strip()
-                if filepath:
+            elif cmd.lower().startswith('cookies'):
+                parts = cmd.split(maxsplit=1)
+                if len(parts) > 1 and parts[1].strip():
+                    filepath = parts[1].strip()
                     downloader.import_cookies_from_file(filepath)
                 else:
-                    console.print("[yellow]请提供 cookies 文件路径[/yellow]")
-                    console.print("[dim]提示: 使用浏览器扩展（如 EditThisCookie）导出 cookies 为 JSON 格式[/dim]")
+                    console.print("[yellow]请提供 cookies 文件路径，或查看 COOKIES_GUIDE.md 了解如何导出[/yellow]")
+                    console.print("[dim]使用方法: cookies <文件路径>[/dim]")
+                    console.print("[dim]例如: cookies browser_cookies.json[/dim]")
+                    console.print("\n[cyan]快速教程:[/cyan]")
+                    console.print("1. 安装浏览器扩展: EditThisCookie (Chrome) 或 Cookie-Editor (Firefox)")
+                    console.print("2. 在浏览器中登录 Z-Library")
+                    console.print("3. 点击扩展图标，导出 cookies (JSON 格式)")
+                    console.print("4. 保存为文件，然后使用: cookies <文件名>")
+                    console.print("\n[dim]详细说明请查看 COOKIES_GUIDE.md 文件[/dim]")
             
             elif cmd.lower() == 'status':
                 status = "已登录" if downloader.is_logged_in else "未登录"
